@@ -246,9 +246,18 @@ def evaluation_score(y_true: np.ndarray, y_pred: np.ndarray,
 # Model building helpers
 # ---------------------------------------------------------------------------
 
-def _build_rf(n_estimators: int, max_depth, min_samples_leaf: int,
-              n_outputs: int):
-    """Return a fitted-ready RF regressor (multi-output)."""
+def _build_rf(n_estimators: int, max_depth: int | None,
+              min_samples_leaf: int, n_outputs: int):
+    """Return a fitted-ready RF regressor (multi-output).
+
+    Parameters
+    ----------
+    n_estimators:     Number of trees.
+    max_depth:        Maximum tree depth (None = unlimited).
+    min_samples_leaf: Minimum samples per leaf.
+    n_outputs:        Number of target columns; wraps in MultiOutputRegressor
+                      when > 1.
+    """
     base = RandomForestRegressor(
         n_estimators=n_estimators,
         max_depth=max_depth,
@@ -262,9 +271,18 @@ def _build_rf(n_estimators: int, max_depth, min_samples_leaf: int,
     return MultiOutputRegressor(base, n_jobs=1)
 
 
-def _build_xgb(n_estimators: int, max_depth, eta: float,
+def _build_xgb(n_estimators: int, max_depth: int | None, eta: float,
                n_outputs: int):
-    """Return an XGBoost regressor (multi-output)."""
+    """Return an XGBoost regressor (multi-output).
+
+    Parameters
+    ----------
+    n_estimators: Number of boosting rounds.
+    max_depth:    Maximum tree depth (None defaults to 6).
+    eta:          Learning rate.
+    n_outputs:    Number of target columns; wraps in MultiOutputRegressor
+                  when > 1.
+    """
     if not _HAS_XGB:
         raise ImportError("xgboost is not installed.")
     params = dict(
@@ -412,10 +430,10 @@ def train(args):
     os.makedirs(args.output_dir, exist_ok=True)
 
     if args.save_model:
-        ts = datetime.now().strftime("%Y%m%d%H%M")
+        timestamp = datetime.now().strftime("%Y%m%d%H%M")
         model_path = os.path.join(
             args.output_dir,
-            f"model_{args.regressor}_{ts}_ne{args.n_estimators}.pkl",
+            f"model_{args.regressor}_{timestamp}_ne{args.n_estimators}.pkl",
         )
         joblib.dump(final_model, model_path)
         print(f"\nModel saved to: {model_path}")
